@@ -1,62 +1,76 @@
 const express = require('express');
+const db = require('../db')
 
-const Schemes = require('./scheme-model.js');
+const Schemes = require('./scheme-model');
 
-const router = express.Router();
-
-router.get('/', (req, res) => {
-  Schemes.find()
-  .then(schemes => {
-    res.json(schemes);
-  })
-  .catch(err => {
-    res.status(500).json({ message: 'Failed to get schemes' });
-  });
+const router = express.Router({
+  mergeParams: true
 });
 
-router.get('/:id', (req, res) => {
-  const { id } = req.params;
+router.get('/', async(req,res,next)=>{
+  try{
+    const schemes = await Schemes.find()
+    res.json(schemes)
+  }
+  catch(err){
+    next(err)
+  }
+})
 
-  Schemes.findById(id)
-  .then(scheme => {
-    if (scheme) {
-      res.json(scheme);
-    } else {
-      res.status(404).json({ message: 'Could not find scheme with given id.' })
-    }
-  })
-  .catch(err => {
-    res.status(500).json({ message: 'Failed to get schemes' });
-  });
-});
+router.get('/:id', async(req,res,next)=>{
+  try{
+    const { id } = req.params
+    res.json(await Schemes.findById(id))
+  }
+  catch(err){
+    next(err)
+  }
+})
 
-router.get('/:id/steps', (req, res) => {
-  const { id } = req.params;
+router.get('/:id/steps', async(req,res,next)=>{
+  try{
+    const { id } = req.params
+    res.json(await Schemes.findSteps(id))
+  }
+  catch(err){
+    next(err)
+  }
+})
 
-  Schemes.findSteps(id)
-  .then(steps => {
-    if (steps.length) {
-      res.json(steps);
-    } else {
-      res.status(404).json({ message: 'Could not find steps for given scheme' })
-    }
-  })
-  .catch(err => {
-    res.status(500).json({ message: 'Failed to get steps' });
-  });
-});
+router.post('/', async(req,res,next)=>{
+  try{
+    const payload = req.body
+    await Schemes.add(payload)
+    res.json({message:"successfully added"})
+  }
+  catch(err){
+    next(err)
+  }
+})
 
-router.post('/', (req, res) => {
-  const schemeData = req.body;
+//STETCH
 
-  Schemes.add(schemeData)
-  .then(scheme => {
-    res.status(201).json(scheme);
-  })
-  .catch (err => {
-    res.status(500).json({ message: 'Failed to create new scheme' });
-  });
-});
+// router.post('/:id/steps', async(req,res,next)=>{
+//   try{
+//     const payload = req.body
+//     await Schemes.update(payload, req.params.id)
+//     res.json({message:"successfully updated"})
+//   }
+//   catch(err){
+//     next(err)
+//   }
+// })
+
+router.put('/:id', async(req,res,next)=>{
+  try{
+    const payload = req.body
+    await Schemes.update(payload, req.params.id)
+    res.json({message:"successfully updated"})
+  }
+  catch(err){
+    next(err)
+  }
+})
 
 router.post('/:id/steps', (req, res) => {
   const stepData = req.body;
@@ -78,25 +92,15 @@ router.post('/:id/steps', (req, res) => {
   });
 });
 
-router.put('/:id', (req, res) => {
-  const { id } = req.params;
-  const changes = req.body;
-
-  Schemes.findById(id)
-  .then(scheme => {
-    if (scheme) {
-      Schemes.update(changes, id)
-      .then(updatedScheme => {
-        res.json(updatedScheme);
-      });
-    } else {
-      res.status(404).json({ message: 'Could not find scheme with given id' });
-    }
-  })
-  .catch (err => {
-    res.status(500).json({ message: 'Failed to update scheme' });
-  });
-});
+router.delete(':/id', async(req,res,next)=>{
+  try{
+    await Schemes.remove(req.params.id)
+    res.json({message:"successfully deleted record"})
+  }
+  catch(err){
+    next(err)
+  }
+})
 
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
